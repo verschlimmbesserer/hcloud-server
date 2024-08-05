@@ -1,0 +1,38 @@
+---
+
+default:
+  virtual_machine:
+  networks: []
+  allow_deprecated_image:
+  backups:
+  delete_protection: false
+  rebuild_protection: false
+  enable_ipv4: true
+  enable_ipv6: true
+  firewalls: []
+  force: false
+  image: ubuntu-24.04
+  labels:
+  location: fsn1
+  server_type: cx11
+  ssh_keys: []
+  state: present
+  upgrade_disk: false
+
+# virtual_machine:
+#   networks: []
+#   allow_deprecated_image:
+#   backups:
+#   delete_protection: false
+#   rebuild_protection: false
+#   enable_ipv4: true
+#   enable_ipv6: true
+#   firewalls: []
+#   force: false
+#   image: ubuntu-24.04
+#   labels:
+#   location: fsn1
+#   server_type: cx11
+#   ssh_keys: []
+#   state: present
+#   upgrade_disk: false

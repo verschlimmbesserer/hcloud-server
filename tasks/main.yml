@@ -1,0 +1,53 @@
+---
+
+- name: "Delete hcloud Server networks for virutal machine {{ inventory_hostname }}"
+  hetzner.hcloud.server_network:
+    api_token: "{{ hcloud_api_token }}"
+    server: "{{ inventory_hostname }}"
+    network: "{{ item.name }}"
+    state: absent
+  with_items: "{{ virtual_machine.networks | default(default.virtual_machines.networks) }}"
+  when: virtual_machine.networks | default([]) and (item.state | default("present") == "absent") or ( virtual_machine.state | default('present') == "absent")
+  register: delete_server_network
+
+- name: "HCloud Deploy virtual machine: {{ inventory_hostname }}"
+  hetzner.hcloud.server:
+    api_token: "{{ hcloud_api_token }}"
+    name: "{{ inventory_hostname }}"
+    allow_deprecated_image: "{{ virtual_machine.allow_deprecated_image | default(default.virtual_machines.deprecated_image | default(false)) }}"
+    backups: "{{ virtual_machine.backups | default(default.virtual_machines.backup | default(omit)) }}"
+    delete_protection: "{{ virtual_machine.delete_protection | default(default.virtual_machines.delete_protection | default(false)) }}"
+    rebuild_protection: "{{ virtual_machine.delete_protection | default(default.virtual_machines.delete_protection | default(false)) }}"
+    enable_ipv4: "{{ virtual_machine.enable_ipv4 | default(default.virtual_machines.enable_ipv4 | default(true)) }}"
+    enable_ipv6: "{{ virtual_machine.enable_ipv6 | default(default.virtual_machines.enable_ipv6 | default(true)) }}"
+    firewalls: "{{ virtual_machine.firewalls | default(omit) }}"
+    force: "{{ virtual_machine.force | default(default.virtual_machines.force | default(false)) }}"
+    image: "{{ virtual_machine.image | default(default.virtual_machines.image | default('ubuntu-22.04')) }}"
+    labels: "{{ virtual_machine.labels | default(default.virtual_machines.labels | default(omit)) }}"
+    location: "{{ virtual_machine.location | default(default.virtual_machines.location | default(default.virtual_machines.datacenter | default('fsn1'))) }}"
+    server_type: "{{ virtual_machine.server_type | default(default.virtual_machines.server_type | default('cx11')) }}"
+    ssh_keys: "{{ default_ssh_keys | default(default.virtual_machines.ssh_keys | default(omit)) }}"
+    state: "{{ virtual_machine.state | default(default.virtual_machines.state | default('present')) }}"
+    upgrade_disk: "{{ virtual_machine.upgrade_disk | default(default.virtual_machines.upgrade_disk | default(false)) }}"
+
+- name: "Create Volumes for Virtual Machine {{ inventory_hostname }}"
+  hetzner.hcloud.volume:
+    api_token: "{{ hcloud_api_token }}"
+    server: "{{ inventory_hostname }}"
+    name: "{{ item.name }}"
+    location: "{{ virtual_machine.location | default(default.virtual_machines.location | default(default.virtual_machines.datacenter | default('fsn1'))) }}"
+    size: "{{ item.size }}"
+    state: "{{ item.state | default(virtual_machine.state | default(default.virtual_machines.state | default('present'))) }}"
+  with_items: "{{ virtual_machine.volumes }}"
+  when: virtual_machine.volumes | default([])
+
+- name: "Create a server network and add alias ips for VM {{ inventory_hostname }}"
+  hetzner.hcloud.server_network:
+    api_token: "{{ hcloud_api_token }}"
+    network: "{{ item.name }}"
+    server: "{{ inventory_hostname }}"
+    state: "{{ item.state | default(virtual_machine.state | default(default.virtual_machines.state | default('present'))) }}"
+    ip: "{{ item.ip | default(omit) }}"
+    alias_ips: "{{ item.alias_ips | default(omit) }}"
+  with_items: "{{ virtual_machine.networks | default(default.virtual_machines.networks) }}"
+  when: virtual_machine.networks | default([]) and (item.state | default("present") == "present") or ( virtual_machine.state | default('present') == "present")
